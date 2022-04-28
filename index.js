@@ -21,18 +21,34 @@ async function run() {
         const productCollection = client.db('emaJohn').collection('product')
 
         app.get('/product', async (req, res) => {
-            const query = {}  // {} it means getting  the all data 
-            const cursor = productCollection.find(query)
-            const product = await cursor.toArray()  //
-            // const product = await cursor.limit(10).toArray()  //limit(10 ) means 10 product will show in the shop browser
-            res.send(product)
 
-            app.get('/product/count', async (req, res) => {
+            console.log('query', req.query)
+            const query = {}  // {} it means getting  the all data 
+
+            const size = parseInt(req.query.size)
+            const page = parseInt(req.query.page)
+            const cursor = productCollection.find(query)
+            let products
+            if (page || size) {
+                //0--> skip: 0 get:0-10(10)
+                //1--> skip: 1*10 get:11-20(10)
+                //2 --> skip: 2*10 get:21-30
+                products = await cursor.skip(page * size).limit(size).toArray()
+            }
+            else {
+                products = await cursor.toArray()  //
+
+            }
+
+            // const product = await cursor.limit(10).toArray()  //limit(10 ) means 10 product will show in the shop browser
+            res.send(products)
+
+            app.get('/productscount', async (req, res) => {
                 const quer = {}
                 const cursor = productCollection.find(quer);
-                const count= await cursor.count();
+                const count = await cursor.count();
                 // res.json(count) //both will work 
-                res.send({count})
+                res.send({ count })
             })
         })
     }
